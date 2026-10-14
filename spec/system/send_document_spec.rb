@@ -56,5 +56,13 @@ RSpec.describe 'Send document' do
 
     expect(mail.subject).to eq('Please sign: payoff letter')
     expect(mail.body.encoded).to include('payoff letter')
+    expect(mail.body.encoded).to include('Sent with Apex Sign')
+    expect(mail.body.encoded).not_to include('Powered by')
+
+    HtmlToPlainTextInterceptor.process(mail)
+
+    expect(mail.text_part.decoded).to include('Sent with Apex Sign')
+    expect(mail.text_part.decoded).not_to include('Powered by')
+    expect(mail.text_part.decoded).not_to include('DocuSeal')
   end
 end
