@@ -9,6 +9,36 @@
       @mousedown.stop
       @pointerdown.stop
     >
+      <ContextSubmenu
+        v-if="showSigner"
+        class="field-settings-signer"
+        :icon="IconUser"
+        :label="t('signer')"
+      >
+        <button
+          v-for="(submitter, index) in template.submitters"
+          :key="submitter.uuid"
+          type="button"
+          class="field-settings-signer-option w-full px-2 py-1 rounded-md hover:bg-neutral-100 flex items-center justify-between gap-2 text-sm cursor-pointer"
+          @click="handleSelectSigner(submitter.uuid)"
+        >
+          <span class="flex items-center gap-2 min-w-0">
+            <span
+              class="w-2.5 h-2.5 rounded-full shrink-0"
+              :class="signerDotClass(index)"
+            />
+            <span class="whitespace-nowrap">{{ submitter.name }}</span>
+          </span>
+          <IconCheck
+            v-if="field.submitter_uuid === submitter.uuid"
+            class="w-4 h-4 shrink-0"
+          />
+        </button>
+      </ContextSubmenu>
+      <hr
+        v-if="showSigner"
+        class="my-1 border-neutral-200"
+      >
       <label
         v-if="showRequired"
         class="field-settings-required w-full px-2 py-1 rounded-md hover:bg-neutral-100 flex items-center space-x-2 text-sm cursor-pointer"
@@ -484,7 +514,8 @@
 </template>
 
 <script>
-import { IconCopy, IconTrashX, IconTypography, IconInfoCircle, IconRouteAltLeft, IconMathFunction, IconAdjustmentsHorizontal, IconInputCheck, IconDots, IconNewSection, IconForms, IconId, IconCash, IconCoins } from '@tabler/icons-vue'
+import { IconCopy, IconTrashX, IconTypography, IconInfoCircle, IconRouteAltLeft, IconMathFunction, IconAdjustmentsHorizontal, IconInputCheck, IconDots, IconNewSection, IconForms, IconId, IconCash, IconCoins, IconUser, IconCheck } from '@tabler/icons-vue'
+import { signerColor } from '../signer_colors'
 import FormulaModal from './formula_modal'
 import FontModal from './font_modal'
 import ConditionsModal from './conditions_modal'
@@ -513,7 +544,8 @@ export default {
     ConditionsModal,
     DescriptionModal,
     ContextSubmenu,
-    ContextModal
+    ContextModal,
+    IconCheck
   },
   inject: ['t', 'getFieldTypeIndex', 'template', 'withCustomFields', 'currencies', 'dateFormats', 'locale', 'withFormula', 'withConditions', 'nativePlatform'],
   props: {
@@ -615,6 +647,9 @@ export default {
     },
     showRequired () {
       return this.withRequired && !['phone', 'stamp', 'verification', 'strikethrough', 'heading'].includes(this.field.type)
+    },
+    showSigner () {
+      return this.editable && !['heading', 'strikethrough'].includes(this.field.type) && this.template.submitters.length > 1
     },
     showReadOnly () {
       return ['text', 'number', 'radio', 'multiple', 'select'].includes(this.field.type)
@@ -777,6 +812,7 @@ export default {
     IconId,
     IconCash,
     IconCoins,
+    IconUser,
     buildDefaultName: Field.methods.buildDefaultName,
     formatNumber: FieldSettings.methods.formatNumber,
     formatDate: FieldSettings.methods.formatDate,
@@ -790,6 +826,17 @@ export default {
           this.contextMenu.y = this.contextMenu.y - overflow - 4
         }
       }
+    },
+    signerDotClass (index) {
+      return signerColor(index).dot
+    },
+    handleSelectSigner (uuid) {
+      if (!this.editable || this.field.submitter_uuid === uuid) {
+        return
+      }
+
+      this.field.submitter_uuid = uuid
+      this.$emit('save')
     },
     handleToggleRequired (value) {
       this.field.required = value

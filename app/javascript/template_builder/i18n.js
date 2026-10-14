@@ -23,6 +23,7 @@ const en = {
   max: 'Max',
   font: 'Font',
   party: 'Party',
+  signer: 'Signer',
   date_signed: 'Date Signed',
   method: 'Method',
   reorder_fields: 'Reorder fields',

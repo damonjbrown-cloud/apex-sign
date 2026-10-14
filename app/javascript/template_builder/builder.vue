@@ -2673,32 +2673,7 @@ export default {
     },
     selectSigner (submitter) {
       this.selectedSubmitter = submitter
-
-      const selectedAreas = this.selectedAreasRef.value
-
-      if (!selectedAreas?.length) {
-        return
-      }
-
-      const selected = new Set(selectedAreas)
-      let changed = false
-
-      this.template.fields.forEach((field) => {
-        if (['heading', 'strikethrough'].includes(field.type)) {
-          return
-        }
-
-        if (!field.areas?.some((area) => selected.has(area)) || field.submitter_uuid === submitter.uuid) {
-          return
-        }
-
-        field.submitter_uuid = submitter.uuid
-        changed = true
-      })
-
-      if (changed) {
-        this.save()
-      }
+      this.selectedAreasRef.value = []
     },
     addSigner () {
       if (this.defaultSubmitters.length) {
