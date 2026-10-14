@@ -225,6 +225,7 @@
 import { IconUserPlus, IconTrashX, IconPlus, IconChevronUp, IconChevronDown } from '@tabler/icons-vue'
 import Contenteditable from './contenteditable'
 import { v4 } from 'uuid'
+import { signerDotClasses } from '../signer_colors'
 
 function getOrdinalSuffix (num) {
   if (num % 10 === 1 && num % 100 !== 11) return 'st'
@@ -293,18 +294,7 @@ export default {
   },
   computed: {
     colors () {
-      return [
-        'bg-blue-500',
-        'bg-green-500',
-        'bg-orange-500',
-        'bg-red-500',
-        'bg-yellow-300',
-        'bg-purple-600',
-        'bg-pink-500',
-        'bg-cyan-500',
-        'bg-lime-500',
-        'bg-indigo-500'
-      ]
+      return signerDotClasses
     },
     names () {
       const generatedNames = []

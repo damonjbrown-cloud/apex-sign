@@ -440,6 +440,7 @@ import { defineAsyncComponent } from 'vue'
 import { IconLock, IconCirclePlus, IconPlus, IconInnerShadowTop, IconSparkles, IconBracketsContain } from '@tabler/icons-vue'
 import IconDrag from './icon_drag'
 import { v4 } from 'uuid'
+import { signerColor } from '../signer_colors'
 
 export default {
   name: 'TemplateFields',
@@ -600,11 +601,7 @@ export default {
   },
   computed: {
     signerDotClass () {
-      const colors = ['bg-blue-500', 'bg-green-500', 'bg-orange-500', 'bg-red-500', 'bg-yellow-300',
-        'bg-purple-600', 'bg-pink-500', 'bg-cyan-500', 'bg-lime-500', 'bg-indigo-500']
-      const index = this.submitters.indexOf(this.selectedSubmitter)
-
-      return colors[(index < 0 ? 0 : index) % colors.length]
+      return signerColor(this.submitters.indexOf(this.selectedSubmitter)).dot
     },
     fieldNames: FieldType.computed.fieldNames,
     fieldIcons: FieldType.computed.fieldIcons,

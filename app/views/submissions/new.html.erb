@@ -1,5 +1,5 @@
 <% submitters = @template.submitters.reject { |e| e['invite_by_uuid'].present? || e['optional_invite_by_uuid'].present? || e['invite_via_field_uuid'].present? } %>
-<% signer_colors = %w[bg-blue-500 bg-green-500 bg-orange-500 bg-red-500 bg-yellow-300 bg-purple-600 bg-pink-500 bg-cyan-500 bg-lime-500 bg-indigo-500] %>
+<% signer_colors = SignerColors.dots %>
 <% can_send_emails = Accounts.can_send_emails?(current_account) %>
 <% default_subject = @template.preferences['request_email_subject'].presence || "Please sign: #{@template.name}" %>
 <% default_body = @template.preferences['request_email_body'].presence || "Please review and sign \"#{@template.name}\".\n\n[Review and Sign]({submitter.link})" %>

@@ -1000,6 +1000,7 @@ import { IconPlus, IconFiles, IconUsersPlus, IconDeviceFloppy, IconChevronDown, 
 import { v4 } from 'uuid'
 import { ref, computed, toRaw, defineAsyncComponent } from 'vue'
 import * as i18n from './i18n'
+import { signerDotClasses } from '../signer_colors'
 
 const isEmpty = (obj) => {
   if (obj == null) return true
@@ -1442,8 +1443,7 @@ export default {
   },
   computed: {
     apexSignerColors () {
-      return ['bg-blue-500', 'bg-green-500', 'bg-orange-500', 'bg-red-500', 'bg-yellow-300',
-        'bg-purple-600', 'bg-pink-500', 'bg-cyan-500', 'bg-lime-500', 'bg-indigo-500']
+      return signerDotClasses
     },
     submitterDefaultNames: FieldSubmitter.computed.names,
     isSelectModeRef: () => ref(false),
