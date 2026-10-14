@@ -7,18 +7,6 @@
     @mousedown.stop="$emit('click-title')"
     @pointerdown.stop
   >
-    <FieldSubmitter
-      v-if="field.type != 'heading' && field.type != 'strikethrough'"
-      v-model="field.submitter_uuid"
-      class="border-r roles-dropdown"
-      :compact="true"
-      :editable="editable && (!defaultField || defaultField.role !== submitter?.name)"
-      :allow-add-new="!defaultSubmitters.length"
-      :menu-classes="'dropdown-content bg-white menu menu-xs p-2 shadow rounded-box w-52 rounded-t-none -left-[1px] mt-[1px]'"
-      :submitters="template.submitters"
-      @update:model-value="$emit('change')"
-      @click="selectedAreasRef.value = [area]"
-    />
     <FieldType
       v-model="field.type"
       :button-width="27"
@@ -245,7 +233,6 @@
 </template>
 
 <script>
-import FieldSubmitter from './field_submitter'
 import FieldType from './field_type'
 import Field from './field'
 import FieldSettings from './field_settings'
@@ -269,7 +256,6 @@ export default {
     IconDotsVertical,
     DescriptionModal,
     ConditionsModal,
-    FieldSubmitter,
     IconX
   },
   inject: ['t', 'nativePlatform'],
@@ -362,9 +348,6 @@ export default {
     },
     fieldNames: FieldType.computed.fieldNames,
     fieldLabels: FieldType.computed.fieldLabels,
-    submitter () {
-      return this.template.submitters.find((s) => s.uuid === this.field.submitter_uuid)
-    },
     isSelected () {
       return this.selectedAreasRef.value.includes(this.area)
     },

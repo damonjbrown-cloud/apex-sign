@@ -4,17 +4,29 @@
     :style="withStickySubmitters ? { backgroundColor } : {}"
     class="flex items-center gap-1"
   >
-    <FieldSubmitter
-      :model-value="selectedSubmitter.uuid"
-      class="roles-dropdown w-full rounded-lg roles-dropdown"
-      :submitters="submitters"
-      :menu-style="{ overflow: 'auto', display: 'flex', flexDirection: 'row', maxHeight: 'calc(100vh - 120px)', backgroundColor: ['', null, 'transparent'].includes(backgroundColor) ? 'white' : backgroundColor }"
-      :editable="editable && !defaultSubmitters.length"
-      @new-submitter="save"
-      @remove="removeSubmitter"
-      @name-change="save"
-      @update:model-value="[$emit('change-submitter', submitters.find((s) => s.uuid === $event)), isShowVariables = false]"
-    />
+    <div
+      v-if="selectedSubmitter"
+      class="flex items-center gap-2 w-full min-w-0 rounded-lg border border-base-300 bg-base-100 px-2 py-1.5"
+    >
+      <span
+        class="w-3 h-3 rounded-full flex-shrink-0"
+        :class="signerDotClass"
+      />
+      <input
+        v-model="selectedSubmitter.name"
+        class="input input-ghost input-sm w-full min-w-0 h-8 px-1 font-medium"
+        :readonly="!(editable && !defaultSubmitters.length)"
+        @change="save"
+      >
+      <button
+        v-if="editable && !defaultSubmitters.length && submitters.length > 1"
+        type="button"
+        class="btn btn-ghost btn-xs shrink-0"
+        @click="removeSubmitter(selectedSubmitter)"
+      >
+        Remove
+      </button>
+    </div>
     <button
       v-if="hasDynamicDocuments"
       class="flex-shrink-0 rounded-md border hover:border-content flex items-center justify-center self-stretch"
@@ -424,7 +436,6 @@
 import Field from './field'
 import CustomField from './custom_field'
 import FieldType from './field_type'
-import FieldSubmitter from './field_submitter'
 import { defineAsyncComponent } from 'vue'
 import { IconLock, IconCirclePlus, IconPlus, IconInnerShadowTop, IconSparkles, IconBracketsContain } from '@tabler/icons-vue'
 import IconDrag from './icon_drag'
@@ -440,7 +451,6 @@ export default {
     IconCirclePlus,
     IconSparkles,
     IconInnerShadowTop,
-    FieldSubmitter,
     IconDrag,
     IconLock,
     IconBracketsContain,
@@ -589,6 +599,13 @@ export default {
     }
   },
   computed: {
+    signerDotClass () {
+      const colors = ['bg-blue-500', 'bg-green-500', 'bg-orange-500', 'bg-red-500', 'bg-yellow-300',
+        'bg-purple-600', 'bg-pink-500', 'bg-cyan-500', 'bg-lime-500', 'bg-indigo-500']
+      const index = this.submitters.indexOf(this.selectedSubmitter)
+
+      return colors[(index < 0 ? 0 : index) % colors.length]
+    },
     fieldNames: FieldType.computed.fieldNames,
     fieldIcons: FieldType.computed.fieldIcons,
     hasDynamicDocuments () {

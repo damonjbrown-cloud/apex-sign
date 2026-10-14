@@ -517,126 +517,94 @@
     <div
       v-if="!nativeView"
       id="main_container"
-      class="flex main-container"
+      class="flex flex-col main-container"
       :class="($slots.buttons || withTitle) && !nativePlatform ? (isMobile ? 'max-h-[calc(100%_-_60px)]' : 'md:max-h-[calc(100%_-_60px)]') : (isMobile ? 'max-h-[100%]' : 'md:max-h-[100%]')"
     >
       <div
-        v-if="withDocumentsList && !withDocumentsDrawer"
-        id="documents_container"
-        ref="previews"
-        :style="{ 'display': isBreakpointLg || isMobile ? 'none' : 'initial' }"
-        class="overflow-y-auto overflow-x-hidden w-52 flex-none pr-3 mt-0.5 pt-0.5"
+        v-if="editable && template.submitters.length"
+        class="apexsign-signer-chips flex-none flex flex-wrap items-center gap-2 mx-0.5 mb-2 px-3 py-2 border border-base-300 rounded-xl bg-base-100"
       >
-        <DocumentPreview
-          v-for="(item, index) in template.schema"
-          :key="index"
-          :with-arrows="template.schema.length > 1"
-          :item="item"
-          :document="sortedDocuments[index]"
-          :data-document-uuid="item.attachment_uuid"
-          :accept-file-types="acceptFileTypes"
-          :with-replace-button="withUploadButton"
-          :with-google-drive="withGoogleDrive"
-          :authenticity-token="authenticityToken"
-          :editable="editable"
-          :dynamic-documents="dynamicDocuments"
-          :with-dynamic-documents="withDynamicDocuments"
-          :template="template"
-          @scroll-to="scrollIntoDocument(item)"
-          @remove="onDocumentRemove"
-          @replace="onDocumentReplace"
-          @up="moveDocument(item, -1)"
-          @reorder="reorderFields"
-          @edit="openDocumentsEditor(item)"
-          @down="moveDocument(item, 1)"
-          @change="save"
-        />
-        <div
-          class="sticky bottom-0 py-2 space-y-2"
-          :style="{ backgroundColor }"
-        >
-          <Upload
-            v-if="editable && withUploadButton"
-            v-show="sortedDocuments.length"
-            ref="upload"
-            :accept-file-types="acceptFileTypes"
-            :authenticity-token="authenticityToken"
-            :with-google-drive="withGoogleDrive"
-            :template-id="template.id"
-            @success="updateFromUpload"
-          />
-          <button
-            v-if="sortedDocuments.length && editable && withAddPageButton"
-            id="add_blank_page_button"
-            class="btn btn-outline w-full add-blank-page-button"
-            @click.prevent="addBlankPage"
-          >
-            <IconInnerShadowTop
-              v-if="isLoadingBlankPage"
-              class="animate-spin w-5 h-5"
-            />
-            <IconPlus
-              v-else
-              class="w-5 h-5"
-            />
-            {{ t('add_blank_page') }}
-          </button>
-        </div>
-      </div>
-      <!-- Apex Sign: signer color chips (modified from upstream DocuSeal, AGPLv3) -->
-      <div
-        v-if="editable && !isMobile && template.submitters.length"
-        class="apexsign-signer-chips flex flex-wrap items-center gap-2 py-1.5 pr-3.5"
-      >
-        <span class="text-xs font-medium opacity-70">Placing fields for:</span>
+        <span class="text-sm font-semibold mr-1">Signer</span>
         <button
           v-for="(submitter, index) in template.submitters"
           :key="submitter.uuid"
           type="button"
-          class="btn btn-sm rounded-full normal-case gap-1.5 px-3"
-          :class="selectedSubmitter?.uuid === submitter.uuid ? 'btn-neutral' : 'btn-ghost border border-base-300'"
-          :title="index < 9 ? `Press ${index + 1}` : ''"
-          @click="selectedSubmitter = submitter"
+          class="btn btn-sm rounded-full normal-case gap-2 px-3 border-2"
+          :class="selectedSubmitter?.uuid === submitter.uuid ? [apexSignerColors[index % apexSignerColors.length], 'text-white border-transparent'] : 'btn-ghost bg-base-100 border-base-300'"
+          :title="index < 9 ? `Press ${index + 1}` : submitter.name"
+          @click="selectSigner(submitter)"
         >
           <span
-            class="w-3 h-3 rounded-full"
-            :class="apexSignerColors[index % apexSignerColors.length]"
+            class="w-3.5 h-3.5 rounded-full flex-shrink-0"
+            :class="selectedSubmitter?.uuid === submitter.uuid ? 'bg-white' : apexSignerColors[index % apexSignerColors.length]"
           />
           {{ submitter.name }}
           <kbd
             v-if="index < 9"
             class="kbd kbd-xs"
+            :class="selectedSubmitter?.uuid === submitter.uuid ? 'bg-white/20 border-white/40 text-white' : ''"
           >{{ index + 1 }}</kbd>
         </button>
-      </div>
-      <div
-        id="pages_container"
-        ref="pagesContainer"
-        class="w-full mt-0.5 pt-0.5"
-        :class="[
-          isMobile ? 'overflow-y-auto' : 'overflow-y-hidden md:overflow-y-auto',
-          zoomLevel > 1 ? 'overflow-x-auto' : 'overflow-x-hidden'
-        ]"
-        @wheel="onPagesWheel"
-      >
-        <div
-          ref="documents"
-          class="pr-3.5 pl-0.5"
-          :style="zoomLevel > 1 ? { width: `${zoomLevel * 100}%` } : null"
+        <button
+          v-if="editable && !defaultSubmitters.length"
+          type="button"
+          class="btn btn-sm btn-outline rounded-full normal-case"
+          @click="addSigner"
         >
-          <template v-if="!sortedDocuments.length && (withUploadButton || withAddPageButton)">
-            <Dropzone
-              v-if="withUploadButton"
-              :template-id="template.id"
+          <IconPlus class="w-4 h-4" />
+          Add signer
+        </button>
+      </div>
+      <div class="flex flex-1 min-h-0">
+        <div
+          v-if="withDocumentsList && !withDocumentsDrawer"
+          id="documents_container"
+          ref="previews"
+          :style="{ 'display': isBreakpointLg || isMobile ? 'none' : 'initial' }"
+          class="overflow-y-auto overflow-x-hidden w-52 flex-none pr-3 mt-0.5 pt-0.5"
+        >
+          <DocumentPreview
+            v-for="(item, index) in template.schema"
+            :key="index"
+            :with-arrows="template.schema.length > 1"
+            :item="item"
+            :document="sortedDocuments[index]"
+            :data-document-uuid="item.attachment_uuid"
+            :accept-file-types="acceptFileTypes"
+            :with-replace-button="withUploadButton"
+            :with-google-drive="withGoogleDrive"
+            :authenticity-token="authenticityToken"
+            :editable="editable"
+            :dynamic-documents="dynamicDocuments"
+            :with-dynamic-documents="withDynamicDocuments"
+            :template="template"
+            @scroll-to="scrollIntoDocument(item)"
+            @remove="onDocumentRemove"
+            @replace="onDocumentReplace"
+            @up="moveDocument(item, -1)"
+            @reorder="reorderFields"
+            @edit="openDocumentsEditor(item)"
+            @down="moveDocument(item, 1)"
+            @change="save"
+          />
+          <div
+            class="sticky bottom-0 py-2 space-y-2"
+            :style="{ backgroundColor }"
+          >
+            <Upload
+              v-if="editable && withUploadButton"
+              v-show="sortedDocuments.length"
+              ref="upload"
               :accept-file-types="acceptFileTypes"
+              :authenticity-token="authenticityToken"
               :with-google-drive="withGoogleDrive"
-              @click-google-drive="$refs.upload.openGoogleDriveModal()"
+              :template-id="template.id"
               @success="updateFromUpload"
             />
             <button
-              v-if="withAddPageButton"
+              v-if="sortedDocuments.length && editable && withAddPageButton"
               id="add_blank_page_button"
-              class="btn btn-outline w-full mt-4 add-blank-page-button"
+              class="btn btn-outline w-full add-blank-page-button"
               @click.prevent="addBlankPage"
             >
               <IconInnerShadowTop
@@ -649,146 +617,189 @@
               />
               {{ t('add_blank_page') }}
             </button>
-          </template>
-          <template v-else>
-            <template
-              v-for="(document, index) in sortedDocuments"
-              :key="document.uuid"
-            >
-              <DynamicDocument
-                v-if="template.schema[index].dynamic"
-                :ref="setDocumentRefs"
-                :editable="editable"
-                :document="dynamicDocuments.find((dynamicDocument) => dynamicDocument.uuid === document.uuid)"
-                :selected-submitter="selectedSubmitter"
-                :drag-field="dragField"
-                :draw-field="drawField"
-                :draw-field-type="drawFieldType"
-                :draw-custom-field="drawCustomField"
-                :draw-option="drawOption"
-                @update="onDynamicDocumentUpdate"
-                @draw="clearDrawField"
-                @add-custom-field="addCustomField"
-                @set-draw="[drawField = $event.field, drawOption = $event.option]"
-              />
-              <Document
-                v-else
-                :ref="setDocumentRefs"
-                :areas-index="fieldAreasIndex[document.uuid]"
-                :selected-submitter="selectedSubmitter"
-                :document="document"
-                :is-drag="!!dragField"
-                :input-mode="inputMode"
-                :conditional-field-index="conditionalFieldIndex"
-                :formula-values-index="formulaValuesIndex"
-                :page-preview-format="pagePreviewFormat"
-                :default-fields="[...defaultRequiredFields, ...defaultFields]"
-                :allow-draw="!onlyDefinedFields || drawField || drawCustomField"
-                :with-signature-id="withSignatureId"
-                :with-prefillable="withPrefillable"
-                :data-document-uuid="document.uuid"
-                :default-submitters="defaultSubmitters"
-                :drag-field-placeholder="fieldsDragFieldRef.value || dragField"
-                :with-field-placeholder="withFieldPlaceholder"
-                :draw-field="drawField"
-                :draw-field-type="drawFieldType"
-                :draw-custom-field="drawCustomField"
-                :editable="editable"
-                :is-mobile="isMobile"
-                :base-url="baseUrl"
-                :with-fields-detection="withFieldsDetection"
-                @draw="[onDraw($event), withSelectedFieldType ? '' : drawFieldType = '', drawCustomField = null, showDrawField = false]"
-                @drop-field="onDropfield"
-                @remove-area="removeArea"
-                @paste-field="pasteField"
-                @copy-field="copyField"
-                @add-custom-field="addCustomField"
-                @set-draw="[drawField = $event.field, drawOption = $event.option]"
-                @copy-selected-areas="copySelectedAreas"
-                @delete-selected-areas="deleteSelectedAreas"
-                @autodetect-fields="detectFieldsForPage"
-              />
-            </template>
-          </template>
-        </div>
-      </div>
-      <div
-        v-if="withFieldsList && !(nativePlatform ? isBreakpointLg : isBreakpointMd)"
-        id="fields_list_container"
-        class="relative w-80 flex-none mt-1 pr-4 pl-0.5 fields-list-container"
-        :class="drawField || drawCustomField ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'"
-      >
-        <div
-          v-if="showDrawField || drawField || drawCustomField"
-          class="sticky inset-0 h-full z-20"
-          :style="{ backgroundColor }"
-        >
-          <div class="bg-base-200 rounded-lg p-5 text-center space-y-4 draw-field-container">
-            <p v-if="(drawField?.type || drawFieldType || drawCustomField?.type) === 'strikethrough'">
-              {{ t('draw_strikethrough_the_document') }}
-            </p>
-            <p v-else>
-              {{ t('draw_field_on_the_document') }}
-            </p>
-            <div>
-              <button
-                class="base-button cancel-draw-button"
-                @click="clearDrawField"
-              >
-                {{ t('cancel') }}
-              </button>
-              <a
-                v-if="!drawField && !drawOption && !['stamp', 'signature', 'initials', 'heading', 'strikethrough'].includes(drawField?.type || drawFieldType || drawCustomField?.type)"
-                href="#"
-                class="link block mt-3 text-sm"
-                @click.prevent="drawCustomField ? addCustomFieldWithoutDraw() : [addField(drawFieldType), drawField = null, drawOption = null, withSelectedFieldType ? '' : drawFieldType = '', showDrawField = false]"
-              >
-                {{ t('or_add_field_without_drawing') }}
-              </a>
-            </div>
           </div>
         </div>
-        <div>
-          <Fields
-            ref="fields"
-            :fields="template.fields"
-            :submitters="template.submitters"
-            :selected-submitter="selectedSubmitter"
-            :with-help="withHelp"
-            :default-submitters="defaultSubmitters"
-            :draw-field-type="drawFieldType"
-            :custom-fields="customFields"
-            :with-custom-fields="withCustomFields"
-            :with-fields-search="withFieldsSearch"
-            :default-fields="[...defaultRequiredFields, ...defaultFields]"
-            :with-custom-fields-tab="withCustomFieldsTab"
-            :template="template"
-            :default-required-fields="defaultRequiredFields"
-            :detect-custom-fields-index="detectCustomFieldsIndex"
-            :field-types="fieldTypes"
-            :with-sticky-submitters="withStickySubmitters"
-            :with-add-fields-pill="!nativePlatform && !showDrawField && !drawField && !drawCustomField"
-            :with-fields-detection="withFieldsDetection"
-            :with-detect-existing-fields="withDetectExistingFields"
-            :with-signature-id="withSignatureId"
-            :with-prefillable="withPrefillable"
-            :only-defined-fields="onlyDefinedFields"
-            :editable="editable"
-            :show-tour-start-form="showTourStartForm"
-            @add-field="addField"
-            @set-draw="[drawField = $event.field, drawOption = $event.option]"
-            @remove-field="onRemoveField"
-            @remove-submitter="onRemoveSubmitter"
-            @select-submitter="selectedSubmitter = $event"
-            @set-draw-type="isMobile ? startFieldDraw({ type: $event }) : [drawFieldType = $event, showDrawField = true]"
-            @set-draw-custom-field="[drawCustomField = $event, showDrawField = true]"
-            @set-drag="dragField = $event"
-            @set-drag-placeholder="$refs.dragPlaceholder.dragPlaceholder = $event"
-            @change-submitter="selectedSubmitter = $event"
-            @drag-end="[dragField = null, $refs.dragPlaceholder.dragPlaceholder = null]"
-            @scroll-to-area="scrollToArea"
-            @rebuild-variables-schema="rebuildVariablesSchema"
-          />
+        <div
+          id="pages_container"
+          ref="pagesContainer"
+          class="w-full mt-0.5 pt-0.5"
+          :class="[
+            isMobile ? 'overflow-y-auto' : 'overflow-y-hidden md:overflow-y-auto',
+            zoomLevel > 1 ? 'overflow-x-auto' : 'overflow-x-hidden'
+          ]"
+          @wheel="onPagesWheel"
+        >
+          <div
+            ref="documents"
+            class="pr-3.5 pl-0.5"
+            :style="zoomLevel > 1 ? { width: `${zoomLevel * 100}%` } : null"
+          >
+            <template v-if="!sortedDocuments.length && (withUploadButton || withAddPageButton)">
+              <Dropzone
+                v-if="withUploadButton"
+                :template-id="template.id"
+                :accept-file-types="acceptFileTypes"
+                :with-google-drive="withGoogleDrive"
+                @click-google-drive="$refs.upload.openGoogleDriveModal()"
+                @success="updateFromUpload"
+              />
+              <button
+                v-if="withAddPageButton"
+                id="add_blank_page_button"
+                class="btn btn-outline w-full mt-4 add-blank-page-button"
+                @click.prevent="addBlankPage"
+              >
+                <IconInnerShadowTop
+                  v-if="isLoadingBlankPage"
+                  class="animate-spin w-5 h-5"
+                />
+                <IconPlus
+                  v-else
+                  class="w-5 h-5"
+                />
+                {{ t('add_blank_page') }}
+              </button>
+            </template>
+            <template v-else>
+              <template
+                v-for="(document, index) in sortedDocuments"
+                :key="document.uuid"
+              >
+                <DynamicDocument
+                  v-if="template.schema[index].dynamic"
+                  :ref="setDocumentRefs"
+                  :editable="editable"
+                  :document="dynamicDocuments.find((dynamicDocument) => dynamicDocument.uuid === document.uuid)"
+                  :selected-submitter="selectedSubmitter"
+                  :drag-field="dragField"
+                  :draw-field="drawField"
+                  :draw-field-type="drawFieldType"
+                  :draw-custom-field="drawCustomField"
+                  :draw-option="drawOption"
+                  @update="onDynamicDocumentUpdate"
+                  @draw="clearDrawField"
+                  @add-custom-field="addCustomField"
+                  @set-draw="[drawField = $event.field, drawOption = $event.option]"
+                />
+                <Document
+                  v-else
+                  :ref="setDocumentRefs"
+                  :areas-index="fieldAreasIndex[document.uuid]"
+                  :selected-submitter="selectedSubmitter"
+                  :document="document"
+                  :is-drag="!!dragField"
+                  :input-mode="inputMode"
+                  :conditional-field-index="conditionalFieldIndex"
+                  :formula-values-index="formulaValuesIndex"
+                  :page-preview-format="pagePreviewFormat"
+                  :default-fields="[...defaultRequiredFields, ...defaultFields]"
+                  :allow-draw="!onlyDefinedFields || drawField || drawCustomField"
+                  :with-signature-id="withSignatureId"
+                  :with-prefillable="withPrefillable"
+                  :data-document-uuid="document.uuid"
+                  :default-submitters="defaultSubmitters"
+                  :drag-field-placeholder="fieldsDragFieldRef.value || dragField"
+                  :with-field-placeholder="withFieldPlaceholder"
+                  :draw-field="drawField"
+                  :draw-field-type="drawFieldType"
+                  :draw-custom-field="drawCustomField"
+                  :editable="editable"
+                  :is-mobile="isMobile"
+                  :base-url="baseUrl"
+                  :with-fields-detection="withFieldsDetection"
+                  @draw="[onDraw($event), withSelectedFieldType ? '' : drawFieldType = '', drawCustomField = null, showDrawField = false]"
+                  @drop-field="onDropfield"
+                  @remove-area="removeArea"
+                  @paste-field="pasteField"
+                  @copy-field="copyField"
+                  @add-custom-field="addCustomField"
+                  @set-draw="[drawField = $event.field, drawOption = $event.option]"
+                  @copy-selected-areas="copySelectedAreas"
+                  @delete-selected-areas="deleteSelectedAreas"
+                  @autodetect-fields="detectFieldsForPage"
+                />
+              </template>
+            </template>
+          </div>
+        </div>
+        <div
+          v-if="withFieldsList && !(nativePlatform ? isBreakpointLg : isBreakpointMd)"
+          id="fields_list_container"
+          class="relative w-80 flex-none mt-1 pr-4 pl-0.5 fields-list-container"
+          :class="drawField || drawCustomField ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'"
+        >
+          <div
+            v-if="showDrawField || drawField || drawCustomField"
+            class="sticky inset-0 h-full z-20"
+            :style="{ backgroundColor }"
+          >
+            <div class="bg-base-200 rounded-lg p-5 text-center space-y-4 draw-field-container">
+              <p v-if="(drawField?.type || drawFieldType || drawCustomField?.type) === 'strikethrough'">
+                {{ t('draw_strikethrough_the_document') }}
+              </p>
+              <p v-else>
+                {{ t('draw_field_on_the_document') }}
+              </p>
+              <div>
+                <button
+                  class="base-button cancel-draw-button"
+                  @click="clearDrawField"
+                >
+                  {{ t('cancel') }}
+                </button>
+                <a
+                  v-if="!drawField && !drawOption && !['stamp', 'signature', 'initials', 'heading', 'strikethrough'].includes(drawField?.type || drawFieldType || drawCustomField?.type)"
+                  href="#"
+                  class="link block mt-3 text-sm"
+                  @click.prevent="drawCustomField ? addCustomFieldWithoutDraw() : [addField(drawFieldType), drawField = null, drawOption = null, withSelectedFieldType ? '' : drawFieldType = '', showDrawField = false]"
+                >
+                  {{ t('or_add_field_without_drawing') }}
+                </a>
+              </div>
+            </div>
+          </div>
+          <div>
+            <Fields
+              ref="fields"
+              :fields="template.fields"
+              :submitters="template.submitters"
+              :selected-submitter="selectedSubmitter"
+              :with-help="withHelp"
+              :default-submitters="defaultSubmitters"
+              :draw-field-type="drawFieldType"
+              :custom-fields="customFields"
+              :with-custom-fields="withCustomFields"
+              :with-fields-search="withFieldsSearch"
+              :default-fields="[...defaultRequiredFields, ...defaultFields]"
+              :with-custom-fields-tab="withCustomFieldsTab"
+              :template="template"
+              :default-required-fields="defaultRequiredFields"
+              :detect-custom-fields-index="detectCustomFieldsIndex"
+              :field-types="fieldTypes"
+              :with-sticky-submitters="withStickySubmitters"
+              :with-add-fields-pill="!nativePlatform && !showDrawField && !drawField && !drawCustomField"
+              :with-fields-detection="withFieldsDetection"
+              :with-detect-existing-fields="withDetectExistingFields"
+              :with-signature-id="withSignatureId"
+              :with-prefillable="withPrefillable"
+              :only-defined-fields="onlyDefinedFields"
+              :editable="editable"
+              :show-tour-start-form="showTourStartForm"
+              @add-field="addField"
+              @set-draw="[drawField = $event.field, drawOption = $event.option]"
+              @remove-field="onRemoveField"
+              @remove-submitter="onRemoveSubmitter"
+              @select-submitter="selectedSubmitter = $event"
+              @set-draw-type="isMobile ? startFieldDraw({ type: $event }) : [drawFieldType = $event, showDrawField = true]"
+              @set-draw-custom-field="[drawCustomField = $event, showDrawField = true]"
+              @set-drag="dragField = $event"
+              @set-drag-placeholder="$refs.dragPlaceholder.dragPlaceholder = $event"
+              @change-submitter="selectedSubmitter = $event"
+              @drag-end="[dragField = null, $refs.dragPlaceholder.dragPlaceholder = null]"
+              @scroll-to-area="scrollToArea"
+              @rebuild-variables-schema="rebuildVariablesSchema"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -2660,6 +2671,54 @@ export default {
         window.webkit?.messageHandlers?.native?.postMessage({ type: 'drawer', op: 'sync', detail })
       }
     },
+    selectSigner (submitter) {
+      this.selectedSubmitter = submitter
+
+      const selectedAreas = this.selectedAreasRef.value
+
+      if (!selectedAreas?.length) {
+        return
+      }
+
+      const selected = new Set(selectedAreas)
+      let changed = false
+
+      this.template.fields.forEach((field) => {
+        if (['heading', 'strikethrough'].includes(field.type)) {
+          return
+        }
+
+        if (!field.areas?.some((area) => selected.has(area)) || field.submitter_uuid === submitter.uuid) {
+          return
+        }
+
+        field.submitter_uuid = submitter.uuid
+        changed = true
+      })
+
+      if (changed) {
+        this.save()
+      }
+    },
+    addSigner () {
+      if (this.defaultSubmitters.length) {
+        return
+      }
+
+      const names = FieldSubmitter.computed.names.call(this)
+      const lastPartyIndex = FieldSubmitter.computed.lastPartyIndex.call({
+        submitters: this.template.submitters,
+        names
+      })
+      const newSubmitter = {
+        name: names[lastPartyIndex] || `Signer ${this.template.submitters.length + 1}`,
+        uuid: v4()
+      }
+
+      this.template.submitters.push(newSubmitter)
+      this.selectedSubmitter = newSubmitter
+      this.save()
+    },
     clearDrawField () {
       this.drawField = null
       this.drawOption = null
@@ -2697,7 +2756,7 @@ export default {
 
         if (submitter) {
           event.preventDefault()
-          this.selectedSubmitter = submitter
+          this.selectSigner(submitter)
 
           return
         }
