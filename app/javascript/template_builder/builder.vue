@@ -583,6 +583,32 @@
           </button>
         </div>
       </div>
+      <!-- Apex Sign: signer color chips (modified from upstream DocuSeal, AGPLv3) -->
+      <div
+        v-if="editable && !isMobile && template.submitters.length"
+        class="apexsign-signer-chips flex flex-wrap items-center gap-2 py-1.5 pr-3.5"
+      >
+        <span class="text-xs font-medium opacity-70">Placing fields for:</span>
+        <button
+          v-for="(submitter, index) in template.submitters"
+          :key="submitter.uuid"
+          type="button"
+          class="btn btn-sm rounded-full normal-case gap-1.5 px-3"
+          :class="selectedSubmitter?.uuid === submitter.uuid ? 'btn-neutral' : 'btn-ghost border border-base-300'"
+          :title="index < 9 ? `Press ${index + 1}` : ''"
+          @click="selectedSubmitter = submitter"
+        >
+          <span
+            class="w-3 h-3 rounded-full"
+            :class="apexSignerColors[index % apexSignerColors.length]"
+          />
+          {{ submitter.name }}
+          <kbd
+            v-if="index < 9"
+            class="kbd kbd-xs"
+          >{{ index + 1 }}</kbd>
+        </button>
+      </div>
       <div
         id="pages_container"
         ref="pagesContainer"
@@ -1404,6 +1430,10 @@ export default {
     }
   },
   computed: {
+    apexSignerColors () {
+      return ['bg-blue-500', 'bg-green-500', 'bg-orange-500', 'bg-red-500', 'bg-yellow-300',
+        'bg-purple-600', 'bg-pink-500', 'bg-cyan-500', 'bg-lime-500', 'bg-indigo-500']
+    },
     submitterDefaultNames: FieldSubmitter.computed.names,
     isSelectModeRef: () => ref(false),
     isCmdKeyRef: () => ref(false),
@@ -2659,6 +2689,18 @@ export default {
     onKeyDown (event) {
       if (this.editModalDocumentUuid) {
         return
+      }
+
+      if (/^[1-9]$/.test(event.key) && !event.ctrlKey && !event.metaKey && !event.altKey &&
+          (!document.activeElement || document.activeElement === document.body)) {
+        const submitter = this.template.submitters[parseInt(event.key) - 1]
+
+        if (submitter) {
+          event.preventDefault()
+          this.selectedSubmitter = submitter
+
+          return
+        }
       }
 
       if (event.key === 'Tab' && document.activeElement === document.body) {

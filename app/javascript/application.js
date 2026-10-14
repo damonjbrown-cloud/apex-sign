@@ -229,7 +229,7 @@ safeRegisterElement('template-builder', class extends HTMLElement {
       customFields: reactive(JSON.parse(this.dataset.customFields || '[]')),
       dateFormats: JSON.parse(this.dataset.dateFormats || '[]'),
       dynamicDocuments: reactive(JSON.parse(this.dataset.dynamicDocuments || '[]')),
-      backgroundColor: '#faf7f5',
+      backgroundColor: '#F4F7FB',
       locale: this.dataset.locale,
       withPhone: this.dataset.withPhone === 'true',
       withPrefillable: template.fields?.some((f) => f.prefillable),
