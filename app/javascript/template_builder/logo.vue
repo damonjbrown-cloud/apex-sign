@@ -2,37 +2,17 @@
   <svg
     height="40"
     width="40"
-    viewBox="0 0 36 36"
+    viewBox="0 0 64 64"
     xmlns="http://www.w3.org/2000/svg"
     aria-hidden="true"
   >
-    <rect
-      width="36"
-      height="36"
-      rx="8"
+    <path
       fill="#185FA5"
+      d="M32 5 L59 59 H45 L32 32 L19 59 H5 Z"
     />
-    <polygon
-      points="18,7 29,27 7,27"
-      fill="none"
-      stroke="#E6F1FB"
-      stroke-width="1.8"
-      stroke-linejoin="round"
-    />
-    <line
-      x1="18"
-      y1="14"
-      x2="18"
-      y2="22"
-      stroke="#378ADD"
-      stroke-width="1.8"
-      stroke-linecap="round"
-    />
-    <circle
-      cx="18"
-      cy="24.5"
-      r="1.5"
-      fill="#378ADD"
+    <path
+      fill="#2EC4B6"
+      d="M32 42 L40 59 H24 Z"
     />
   </svg>
 </template>

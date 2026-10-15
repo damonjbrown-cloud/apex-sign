@@ -3,9 +3,9 @@
     <div class="max-w-xl mx-auto">
       <div class="text-center">
         <div class="relative flex flex-col items-center">
-          <%= render 'shared/logo', width: '100', height: '100' %>
-          <h1 class="text-6xl font-bold mt-4 mb-4">
-            Apex Sign
+          <h1 class="mt-4 mb-4">
+            <%= render 'shared/lockup', class: 'h-16 w-auto mx-auto', height: 64, width: 299 %>
+            <span class="sr-only">Apex Sign</span>
           </h1>
           <% if Docuseal.version.present? %>
             <a href="<%= Docuseal::SOURCE_URL %>" target="_blank" class="badge badge-outline badge-lg block mx-auto">
