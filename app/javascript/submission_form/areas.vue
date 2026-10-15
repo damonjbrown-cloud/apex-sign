@@ -32,6 +32,7 @@
               :is-inline-size="isInlineSize"
               :scroll-padding="scrollPadding"
               :submitter="submitter"
+              :submitter-index="submitterIndex"
               :with-field-placeholder="withFieldPlaceholder"
               :with-signature-id="withSignatureId"
               :is-active="currentStep === step"
@@ -74,6 +75,11 @@ export default {
     submitter: {
       type: Object,
       required: true
+    },
+    submitterIndex: {
+      type: Number,
+      required: false,
+      default: 0
     },
     values: {
       type: Object,

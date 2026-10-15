@@ -35,6 +35,7 @@
     :values="values"
     :readonly-values="readonlyFieldValues"
     :submitter="submitter"
+    :submitter-index="submitterIndex"
     :scroll-el="scrollEl"
     :current-step="currentStepFields"
     :with-field-placeholder="withFieldPlaceholder"
@@ -53,6 +54,7 @@
     :values="values"
     :with-field-placeholder="withFieldPlaceholder"
     :submitter="submitter"
+    :submitter-index="submitterIndex"
     :scroll-el="scrollEl"
     :with-signature-id="withSignatureId"
     :attachments-index="attachmentsIndex"
@@ -66,6 +68,7 @@
     :steps="readonlyConditionalFields.map((e) => [e])"
     :values="readonlyConditionalFieldValues"
     :submitter="submitter"
+    :submitter-index="submitterIndex"
     :attachments-index="attachmentsIndex"
     :submittable="false"
   />
@@ -75,6 +78,7 @@
     :fields-uuid-index="fieldsUuidIndex"
     :readonly-values="readonlyFieldValues"
     :values="values"
+    :submitter-index="submitterIndex"
   />
   <Teleport
     v-if="completeButtonToRef"
@@ -788,6 +792,11 @@ export default {
     submitter: {
       type: Object,
       required: true
+    },
+    submitterIndex: {
+      type: Number,
+      required: false,
+      default: 0
     },
     inviteSubmitters: {
       type: Array,

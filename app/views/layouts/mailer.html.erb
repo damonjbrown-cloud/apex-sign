@@ -6,6 +6,9 @@
     <style></style>
   </head>
   <body dir="<%= TextUtils.rtl?(yield) ? 'rtl' : 'auto' %>">
+    <p style="margin: 0 0 24px;">
+      <img src="<%= root_url %>apex-sign-lockup.png" alt="Apex Sign" width="224" height="48" style="display: block; background: #ffffff;">
+    </p>
     <%= yield %>
     <%= render partial: 'shared/mailer_attribution' %>
   </body>

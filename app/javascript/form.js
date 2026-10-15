@@ -28,6 +28,7 @@ safeRegisterElement('submission-form', class extends HTMLElement {
 
     this.app = createApp(Form, {
       submitter: JSON.parse(this.dataset.submitter),
+      submitterIndex: Number.parseInt(this.dataset.submitterIndex, 10) || 0,
       inviteSubmitters: JSON.parse(this.dataset.inviteSubmitters),
       optionalInviteSubmitters: JSON.parse(this.dataset.optionalInviteSubmitters),
       schema: JSON.parse(this.dataset.schema),

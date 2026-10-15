@@ -1,51 +1,63 @@
-<% require_phone_2fa = @template.preferences['require_phone_2fa'] == true %>
-<% require_email_2fa = @template.preferences['require_email_2fa'] == true %>
-<% prefillable_fields = @template.fields.select { |f| f['prefillable'] } %>
-<% viewer_submitter_uuids = Set.new(@template.submitters.pluck('uuid')) - Set.new(@template.fields.to_a.pluck('submitter_uuid')) %>
-<% default_tab = cookies.permanent[:add_recipients_tab].presence || 'email' %>
-<% recipient_form_fields = Accounts.load_recipient_form_fields(current_account) if prefillable_fields.blank? %>
+<% submitters = @template.submitters.reject { |e| e['invite_by_uuid'].present? || e['optional_invite_by_uuid'].present? || e['invite_via_field_uuid'].present? } %>
+<% signer_colors = SignerColors.dots %>
 <% can_send_emails = Accounts.can_send_emails?(current_account) %>
-<% only_detailed = require_phone_2fa || require_email_2fa || prefillable_fields.present? || recipient_form_fields.present? %>
-<% with_list = @template.variables_schema.blank? && (!turbo_native_ios? || can?(:manage, :bulk_send)) %>
-<% with_phone = !turbo_native_ios? || can?(:manage, :sms_verification) %>
-<% default_tab = 'email' if default_tab == 'phone' && !with_phone %>
-<% variables_form = render 'variables_form', schema: @template.variables_schema if @template.variables_schema.present? && @template.variables_schema.any? { |_, v| !v['disabled'] } %>
-<%= render 'shared/turbo_modal_large', title: params[:selfsign] ? t('add_recipients') : t('add_new_recipients') do %>
-  <% options = [only_detailed ? nil : [t('via_email'), 'email'], only_detailed || !with_phone ? nil : [t('via_phone'), 'phone'], [t('detailed'), 'detailed'], with_list ? [t('upload_list'), 'list'] : nil].compact %>
-  <% if options.size > 1 %>
-    <toggle-visible data-element-ids="<%= options.map(&:last).to_json %>" class="relative text-center px-2 block <%= 'mt-4' unless turbo_native_app? %>">
-      <div class="flex justify-center">
-        <% options.each_with_index do |(label, value), index| %>
-          <%= content_tag(value == 'list' ? 'span' : 'toggle-cookies', data: { value:, key: 'add_recipients_tab' }) do %>
-            <%= radio_button_tag 'option', value, value == (only_detailed ? 'detailed' : default_tab), class: 'peer hidden', data: { action: 'change:toggle-visible#trigger' } %>
-            <label for="option_<%= value %>" class="block bg-base-200 md:min-w-[112px] text-sm font-semibold whitespace-nowrap py-1.5 px-4 peer-checked:bg-base-300 <%= 'hidden sm:inline-block' if value == 'list' %> <%= 'rounded-l-3xl' if index.zero? %> <%= 'rounded-r-3xl sm:rounded-r-none' if value == 'detailed' && index != options.size - 1 %> <%= 'rounded-r-3xl' if index == options.size - 1 %>">
-              <%= label %>
-            </label>
-          <% end %>
+<% default_subject = @template.preferences['request_email_subject'].presence || "Please sign: #{@template.name}" %>
+<% default_body = @template.preferences['request_email_body'].presence || "Please review and sign \"#{@template.name}\".\n\n[Review and Sign]({submitter.link})" %>
+<%= render 'shared/turbo_modal_large', title: t('send') do %>
+  <%= form_for '', url: template_submissions_path(@template), html: { autocomplete: 'off', id: 'apex_send_form' }, data: { turbo_frame: :_top } do |f| %>
+    <%= hidden_field_tag :is_custom_message, '1' %>
+    <%= hidden_field_tag :send_email, can_send_emails ? '1' : '0' %>
+    <div class="px-5 pt-5 pb-5 space-y-5">
+      <div class="space-y-3">
+        <% submitters.each_with_index do |item, index| %>
+          <% prefill_self = (params[:selfsign] && index.zero?) || item['is_requester'] %>
+          <div class="rounded-xl border border-base-300 bg-base-100 px-3 py-3">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="w-3.5 h-3.5 rounded-full flex-shrink-0 <%= signer_colors[index % signer_colors.length] %>"></span>
+              <span class="text-sm font-semibold"><%= item['name'] %></span>
+            </div>
+            <input type="hidden" name="submission[1][submitters][][uuid]" value="<%= item['uuid'] %>">
+            <div class="grid sm:grid-cols-2 gap-2">
+              <label class="form-control">
+                <span class="label-text text-xs mb-1">Name</span>
+                <%= tag.input type: 'text', name: 'submission[1][submitters][][name]', autocomplete: 'name', class: 'base-input !h-10 w-full', placeholder: 'Name', value: prefill_self ? current_user.full_name : '', dir: 'auto', id: "send_name_#{item['uuid']}" %>
+              </label>
+              <label class="form-control">
+                <span class="label-text text-xs mb-1">Email</span>
+                <%= tag.input type: 'email', name: 'submission[1][submitters][][email]', autocomplete: 'email', class: 'base-input !h-10 w-full', placeholder: 'Email', required: true, value: item['email'].presence || (prefill_self ? current_user.email : ''), id: "send_email_#{item['uuid']}" %>
+              </label>
+            </div>
+          </div>
         <% end %>
       </div>
-    </toggle-visible>
-  <% end %>
-  <div class="px-5 mb-5 mt-5">
-    <% unless only_detailed %>
-      <div id="email" class="<%= 'hidden' if default_tab != 'email' %>">
-        <%= render 'email_form', template: @template, variables_form:, can_send_emails:, viewer_submitter_uuids: %>
+      <div class="space-y-3">
+        <label class="form-control" for="send_subject">
+          <span class="label-text font-semibold mb-1">Email Subject</span>
+          <%= f.text_field :subject, value: default_subject, required: true, class: 'base-input w-full', dir: 'auto', id: 'send_subject' %>
+        </label>
+        <label class="form-control" for="send_message">
+          <span class="label-text font-semibold mb-1">Email Message</span>
+          <%= f.text_area :body, value: default_body, required: true, rows: 5, class: 'base-textarea w-full', placeholder: 'What is this document about?', dir: 'auto', id: 'send_message' %>
+        </label>
       </div>
-      <% if with_phone %>
-        <div id="phone" class="<%= 'hidden' if default_tab != 'phone' %>">
-          <%= render 'phone_form', template: @template, variables_form: %>
+      <% if !Docuseal.multitenant? && !can_send_emails %>
+        <div class="alert">
+          <%= svg_icon('info_circle', class: 'w-6 h-6') %>
+          <div>
+            <p class="font-bold"><%= t('smtp_not_configured') %></p>
+            <p>
+              <%= t('configure_smtp_settings_in_order_to_send_emails_') %>
+              <a class="link font-medium" data-turbo-frame="_top" href="<%= settings_email_index_path %>"><%= t('go_to_smtp_settings') %></a>
+            </p>
+          </div>
         </div>
       <% end %>
-    <% end %>
-    <div id="detailed" class="<%= 'hidden' if !only_detailed && default_tab != 'detailed' %>">
-      <%= render 'detailed_form', template: @template, require_phone_2fa:, require_email_2fa:, prefillable_fields:, recipient_form_fields:, variables_form:, can_send_emails:, viewer_submitter_uuids: %>
-    </div>
-    <% if with_list %>
-      <div id="list" class="hidden">
-        <%= render 'list_form', template: @template, can_send_emails:, viewer_submitter_uuids: %>
+      <div class="form-control">
+        <%= f.button class: 'base-button w-full', id: 'apex_send_button' do %>
+          <%= button_title(title: t('send'), disabled_with: t('sending')) %>
+        <% end %>
       </div>
-    <% end %>
-    <%= render 'submissions/error' %>
-  </div>
-  <%= content_for(:modal_extra) %>
+    </div>
+  <% end %>
+  <%= render 'submissions/error' %>
 <% end %>

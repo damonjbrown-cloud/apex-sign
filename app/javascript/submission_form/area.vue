@@ -3,7 +3,7 @@
     class="flex absolute lg:text-base -outline-offset-1 focus-visible:outline-blue-500 focus-visible:outline-2 focus-visible:outline field-area"
     dir="auto"
     :style="[computedStyle, fontStyle]"
-    :class="{ 'cursor-default': !submittable, 'border border-red-100 bg-red-100 cursor-pointer': submittable, 'border border-red-100': !isActive && submittable, 'bg-opacity-80': !isActive && !isValueSet && submittable, 'outline-red-500 outline-dashed outline-2 z-10 field-area-active': isActive && submittable, 'bg-opacity-40': (isActive || isValueSet) && submittable }"
+    :class="toneClasses"
     :role="submittable && !isNativeInputField ? 'button' : undefined"
     :tabindex="submittable && !isNativeInputField ? 0 : undefined"
     :aria-label="submittable && !isNativeInputField ? fieldAreaLabel : undefined"
@@ -287,6 +287,7 @@
 
 <script>
 import MarkdownContent from './markdown_content'
+import { signerColor } from '../signer_colors'
 import { IconTextSize, IconWritingSign, IconCalendarEvent, IconPhoto, IconCheckbox, IconPaperclip, IconSelect, IconCircleDot, IconChecks, IconCheck, IconColumns3, IconPhoneCheck, IconLetterCaseUpper, IconCreditCard, IconRubberStamp, IconSquareNumber1, IconId, IconUserScan } from '@tabler/icons-vue'
 
 export default {
@@ -311,6 +312,11 @@ export default {
       type: Object,
       required: false,
       default: () => ({})
+    },
+    submitterIndex: {
+      type: Number,
+      required: false,
+      default: 0
     },
     withSignatureId: {
       type: Boolean,
@@ -389,6 +395,33 @@ export default {
     }
   },
   computed: {
+    toneClasses () {
+      const tone = signerColor(this.submitterIndex)
+
+      if (!this.submittable) {
+        return ['cursor-default']
+      }
+
+      const classes = ['border', 'cursor-pointer', tone.edge, tone.bg]
+
+      if (!this.isActive) {
+        classes.push('border', tone.edge)
+      }
+
+      if (!this.isActive && !this.isValueSet) {
+        classes.push('bg-opacity-80')
+      }
+
+      if (this.isActive) {
+        classes.push(tone.outline, 'outline-dashed', 'outline-2', 'z-10', 'field-area-active')
+      }
+
+      if (this.isActive || this.isValueSet) {
+        classes.push('bg-opacity-40')
+      }
+
+      return classes
+    },
     fieldNames () {
       return {
         text: this.t('text'),

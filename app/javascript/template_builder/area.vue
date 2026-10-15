@@ -224,6 +224,7 @@
 import FieldType from './field_type'
 import Field from './field'
 import AreaTitle from './area_title'
+import { signerBgClasses, signerBorderClasses } from '../signer_colors'
 import { IconCheck } from '@tabler/icons-vue'
 
 export default {
@@ -475,32 +476,10 @@ export default {
       return this.template.submitters.indexOf(this.submitter)
     },
     borderColors () {
-      return [
-        'border-red-500/80',
-        'border-sky-500/80',
-        'border-emerald-500/80',
-        'border-yellow-300/80',
-        'border-purple-600/80',
-        'border-pink-500/80',
-        'border-cyan-500/80',
-        'border-orange-500/80',
-        'border-lime-500/80',
-        'border-indigo-500/80'
-      ]
+      return signerBorderClasses
     },
     bgColors () {
-      return [
-        'bg-red-100',
-        'bg-sky-100',
-        'bg-emerald-100',
-        'bg-yellow-100',
-        'bg-purple-100',
-        'bg-pink-100',
-        'bg-cyan-100',
-        'bg-orange-100',
-        'bg-lime-100',
-        'bg-indigo-100'
-      ]
+      return signerBgClasses
     },
     isSelected () {
       return this.selectedAreasRef.value.includes(this.area)

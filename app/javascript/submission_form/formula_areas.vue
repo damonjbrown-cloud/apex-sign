@@ -18,6 +18,7 @@
           :field="field"
           :area="area"
           :submittable="false"
+          :submitter-index="submitterIndex"
           :field-index="fieldIndex"
         />
       </Teleport>
@@ -53,6 +54,11 @@ export default {
       type: Object,
       required: false,
       default: () => ({})
+    },
+    submitterIndex: {
+      type: Number,
+      required: false,
+      default: 0
     }
   },
   data () {

@@ -46,6 +46,7 @@
               :is-inline-size="isInlineSize"
               :scroll-padding="scrollPadding"
               :submitter="submitter"
+              :submitter-index="submitterIndex"
               :with-field-placeholder="withFieldPlaceholder"
               :with-signature-id="withSignatureId"
               :is-active="currentStep === item.step"
@@ -66,6 +67,7 @@
               :field-index="item.fieldIndex"
               :is-inline-size="isInlineSize"
               :submitter="submitter"
+              :submitter-index="submitterIndex"
               :attachments-index="attachmentsIndex"
             />
             <FieldArea
@@ -75,6 +77,7 @@
               :field="item.field"
               :area="item.area"
               :submittable="false"
+              :submitter-index="submitterIndex"
               :field-index="item.fieldIndex"
             />
           </template>
@@ -143,6 +146,11 @@ export default {
     submitter: {
       type: Object,
       required: true
+    },
+    submitterIndex: {
+      type: Number,
+      required: false,
+      default: 0
     },
     currentStep: {
       type: Array,
